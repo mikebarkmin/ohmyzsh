@@ -47,16 +47,17 @@ For this plugin to work your container must have `zsh` installed. You can used t
 
 There are also some convenient aliases which make for example use of the `TOOLBOX_DEFAULT_IMAGE` when set.
 
-| alias | command |
-| ----- | ------- |
-| tb | toolbox |
-| tbi | echo $TOOLBOX_DEFAULT_CONTAINER > .toolbox && toolbox_cwd |
-| tbc | toolbox create --image $TOOLBOX_DEFAULT_IMAGE |
-| tbe | toolbox enter |
-| tbrm | toolbox rm |
-| tbrmi | toolbox rmi |
-| tbl | toolbox list |
-| tbr | toolbox run |
+| alias | command | comment |
+| ----- | ------- | ------- |
+| tb | toolbox | |
+| tbi | echo $TOOLBOX_DEFAULT_CONTAINER > .toolbox && toolbox_cwd | |
+| tbc | toolbox create --image $TOOLBOX_DEFAULT_IMAGE | |
+| tbe | toolbox enter | This is context aware |
+| tbrm | toolbox rm | |
+| tbrmi | toolbox rmi | |
+| tbl | toolbox list | |
+| tbr | toolbox run | This is context aware |
+
 
 ## Theme Integratio
 In most themes you can see the hostname (`user_host`), which is set by this plugin for each container, so there is not additional setup needed.
