@@ -3,15 +3,6 @@ if ! (( $+commands[tmux] )); then
   return 1
 fi
 
-# ALIASES
-
-alias ta='tmux attach -t'
-alias tad='tmux attach -d -t'
-alias ts='tmux new-session -s'
-alias tl='tmux list-sessions'
-alias tksv='tmux kill-server'
-alias tkss='tmux kill-session -t'
-
 # CONFIGURATION VARIABLES
 # Automatically start tmux
 : ${ZSH_TMUX_AUTOSTART:=false}
@@ -35,9 +26,24 @@ alias tkss='tmux kill-session -t'
 # systems without the proper terminfo
 : ${ZSH_TMUX_FIXTERM_WITH_256COLOR:=screen-256color}
 # Set the configuration path
-: ${ZSH_TMUX_CONFIG:=$HOME/.tmux.conf}
+if [[ -e $HOME/.tmux.conf ]]; then
+  : ${ZSH_TMUX_CONFIG:=$HOME/.tmux.conf}
+elif [[ -e ${XDG_CONFIG_HOME:-$HOME/.config}/tmux/tmux.conf ]]; then
+  : ${ZSH_TMUX_CONFIG:=${XDG_CONFIG_HOME:-$HOME/.config}/tmux/tmux.conf}
+else
+  : ${ZSH_TMUX_CONFIG:=$HOME/.tmux.conf}
+fi
 # Set -u option to support unicode
 : ${ZSH_TMUX_UNICODE:=false}
+
+# ALIASES
+alias ta='tmux attach -t'
+alias tad='tmux attach -d -t'
+alias ts='tmux new-session -s'
+alias tl='tmux list-sessions'
+alias tksv='tmux kill-server'
+alias tkss='tmux kill-session -t'
+alias tmuxconf='$EDITOR $ZSH_TMUX_CONFIG'
 
 # Determine if the terminal supports 256 colors
 if [[ $terminfo[colors] == 256 ]]; then
@@ -45,6 +51,11 @@ if [[ $terminfo[colors] == 256 ]]; then
 else
   export ZSH_TMUX_TERM=$ZSH_TMUX_FIXTERM_WITHOUT_256COLOR
 fi
+
+# Handle $0 according to the standard:
+# https://zdharma-continuum.github.io/Zsh-100-Commits-Club/Zsh-Plugin-Standard.html
+0="${${ZERO:-${0:#$ZSH_ARGZERO}}:-${(%):-%N}}"
+0="${${(M)0:#/*}:-$PWD/$0}"
 
 # Set the correct local config file to use.
 if [[ "$ZSH_TMUX_ITERM2" == "false" && -e "$ZSH_TMUX_CONFIG" ]]; then
@@ -67,7 +78,11 @@ function _zsh_tmux_plugin_run() {
   [[ "$ZSH_TMUX_UNICODE" == "true" ]] && tmux_cmd+=(-u)
 
   # Try to connect to an existing session.
-  [[ "$ZSH_TMUX_AUTOCONNECT" == "true" ]] && $tmux_cmd attach
+  if [[ -n "$ZSH_TMUX_DEFAULT_SESSION_NAME" ]]; then
+    [[ "$ZSH_TMUX_AUTOCONNECT" == "true" ]] && $tmux_cmd attach -t $ZSH_TMUX_DEFAULT_SESSION_NAME
+  else
+    [[ "$ZSH_TMUX_AUTOCONNECT" == "true" ]] && $tmux_cmd attach
+  fi
 
   # If failed, just run tmux, fixing the TERM variable if requested.
   if [[ $? -ne 0 ]]; then
@@ -77,9 +92,9 @@ function _zsh_tmux_plugin_run() {
       tmux_cmd+=(-f "$ZSH_TMUX_CONFIG")
     fi
     if [[ -n "$ZSH_TMUX_DEFAULT_SESSION_NAME" ]]; then
-        $tmux_cmd new-session -s $ZSH_TMUX_DEFAULT_SESSION_NAME
+      $tmux_cmd new-session -s $ZSH_TMUX_DEFAULT_SESSION_NAME
     else
-        $tmux_cmd new-session
+      $tmux_cmd new-session
     fi
   fi
 
@@ -94,7 +109,7 @@ compdef _tmux _zsh_tmux_plugin_run
 alias tmux=_zsh_tmux_plugin_run
 
 # Autostart if not already in tmux and enabled.
-if [[ -z "$TMUX" && "$ZSH_TMUX_AUTOSTART" == "true" && -z "$INSIDE_EMACS" && -z "$EMACS" && -z "$VIM" ]]; then
+if [[ -z "$TMUX" && "$ZSH_TMUX_AUTOSTART" == "true" && -z "$INSIDE_EMACS" && -z "$EMACS" && -z "$VIM" && -z "$INTELLIJ_ENVIRONMENT_READER" ]]; then
   # Actually don't autostart if we already did and multiple autostarts are disabled.
   if [[ "$ZSH_TMUX_AUTOSTART_ONCE" == "false" || "$ZSH_TMUX_AUTOSTARTED" != "true" ]]; then
     export ZSH_TMUX_AUTOSTARTED=true
